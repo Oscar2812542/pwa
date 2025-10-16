@@ -137,7 +137,7 @@ const ReporteHistorial = () => {
                     <tbody>
                         {historial.map((mov, index) => (
                             <tr key={mov._id} style={{ 
-                                backgroundColor: mov.tipoMovimiento === 'Entrada' ? '#d4edda' : '#f8d7da' 
+                                backgroundColor: mov.tipoMovimiento === 'Entrada' ? '#ffffffff' :  '#ffffffff'
                             }}>
                                 <td style={{ padding: '10px', border: '1px solid #ddd', fontWeight: 'bold' }}>{mov.tipoMovimiento}</td>
                                 <td style={{ padding: '10px', border: '1px solid #ddd' }}>{new Date(mov.fecha).toLocaleDateString('es-MX')}</td>

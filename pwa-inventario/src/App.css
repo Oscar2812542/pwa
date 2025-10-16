@@ -32,6 +32,7 @@
 ========================================= */
 body {
   font-family: 'Inter', sans-serif;
+  font-size: clamp(14px, 2vw, 18px);
   background-color: var(--color-fondo);
   color: var(--color-texto);
   margin: 0;
@@ -46,11 +47,12 @@ h1, h2, h3 {
 }
 
 div.content {
-  background: #1e293b;
-  border-radius: 12px;
-  padding: 25px;
+  width: 90%;
   max-width: 1200px;
   margin: 40px auto;
+  padding: 25px;
+  background: #1e293b;
+  border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.25);
 }
 
@@ -71,7 +73,7 @@ div.content {
 
 .formulario-grid .columna {
   flex: 1;
-  min-width: 300px;
+  min-width: 250px;
 }
 
 label {
@@ -82,12 +84,12 @@ label {
 
 input, select {
   width: 100%;
-  padding: 8px;
+  padding: clamp(8px, 1.5vw, 12px);
   border-radius: 6px;
   border: 1px solid var(--color-borde);
   background-color: #1e293b;
   color: var(--color-texto);
-  font-size: 14px;
+  font-size: clamp(14px, 1.5vw, 16px);
   margin-bottom: 15px;
 }
 
@@ -104,10 +106,10 @@ button {
   background: linear-gradient(90deg, var(--color-primario) 0%, var(--color-secundario) 100%);
   color: var(--color-fondo);
   border: none;
-  padding: 12px 20px;
+  padding: clamp(10px, 1.5vw, 18px) clamp(15px, 2vw, 30px);
   border-radius: 8px;
   cursor: pointer;
-  font-size: 16px;
+  font-size: clamp(14px, 1.5vw, 18px);
   font-weight: 600;
   transition: transform 0.2s, box-shadow 0.2s;
 }
@@ -148,6 +150,7 @@ button:hover {
   overflow: hidden;
   margin-top: 20px;
   box-shadow: 0 0 25px rgba(0,0,0,0.2);
+  font-size: clamp(12px, 1.2vw, 16px);
 }
 
 .tabla-hospitalaria thead {
@@ -156,7 +159,7 @@ button:hover {
 }
 
 .tabla-hospitalaria th, .tabla-hospitalaria td {
-  padding: 12px 15px;
+  padding: clamp(8px, 1vw, 15px);
   text-align: left;
 }
 
@@ -180,25 +183,11 @@ button:hover {
 .semaforo-amarillo { color: var(--semaforo-amarillo); font-weight: 700; }
 .semaforo-verde { color: var(--semaforo-verde); font-weight: 700; }
 
-/* =========================================
-   RESPONSIVE
-========================================= */
-@media (max-width: 900px) {
-  .formulario-grid {
-    flex-direction: column;
-  }
-  div.content {
-    margin: 15px;
-    padding: 15px;
-  }
-}
-/* =========================================
-   SEMÁFOROS CIRCULARES
-========================================= */
+/* Semáforos circulares */
 .semaforo {
   display: inline-block;
-  width: 16px;
-  height: 16px;
+  width: clamp(12px, 1.2vw, 20px);
+  height: clamp(12px, 1.2vw, 20px);
   border-radius: 50%;
   border: 1px solid var(--color-borde);
 }
@@ -208,7 +197,7 @@ button:hover {
 .semaforo-verde { background-color: var(--semaforo-verde); }
 .semaforo-gris { background-color: var(--semaforo-gris); }
 
-/* Centrar las celdas de semáforo y numéricas en tablas */
+/* Centrar celdas de semáforo y numéricas en tablas */
 .tabla-hospitalaria td:nth-child(4),
 .tabla-hospitalaria td:nth-child(5),
 .tabla-hospitalaria td:nth-child(6),
@@ -224,4 +213,33 @@ button:hover {
 .total-productos, .costo-total {
   font-weight: 600;
   margin-top: 10px;
+  font-size: clamp(14px, 1.5vw, 18px);
+}
+
+/* =========================================
+   RESPONSIVE
+========================================= */
+/* Móviles */
+@media (max-width: 600px) {
+  .formulario-grid { flex-direction: column; gap: 15px; }
+  div.content { padding: 10px; margin: 10px; }
+  button { width: 100%; }
+}
+
+/* Tablets */
+@media (min-width: 601px) and (max-width: 900px) {
+  .formulario-grid { flex-direction: column; gap: 18px; }
+  div.content { padding: 15px; margin: 15px; }
+}
+
+/* Escritorio mediano */
+@media (min-width: 901px) and (max-width: 1400px) {
+  div.content { padding: 20px; margin: 20px auto; }
+}
+
+/* TVs grandes */
+@media (min-width: 1920px) {
+  div.content { padding: 40px; margin: 60px auto; }
+  button { padding: 18px 30px; font-size: 20px; }
+  .tabla-hospitalaria th, .tabla-hospitalaria td { padding: 18px 20px; font-size: 18px; }
 }
