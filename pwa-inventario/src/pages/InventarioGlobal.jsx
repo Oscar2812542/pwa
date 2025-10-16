@@ -1,26 +1,31 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import apiClient from '../api/apiClient'; 
+import apiClient from '../api/apiClient';
+
+const INVENTORY_TABLE_ID = 'inventario-table';
+
+// Función para determinar color del semáforo
+const getExpirationStatus = (diasParaVencer) => {
+    if (diasParaVencer === null || diasParaVencer === undefined) return 'gray';
+    const days = Number(diasParaVencer);
+    if (days <= 30) return 'red';
+    if (days <= 90) return 'yellow';
+    return 'green';
+};
 
 const InventarioGlobal = () => {
-    // 1. Estado para almacenar el inventario completo
     const [inventario, setInventario] = useState([]);
-    // 2. Estado para el término de búsqueda
     const [searchTerm, setSearchTerm] = useState('');
-    
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
-    // Cargar el inventario una sola vez al inicio
     useEffect(() => {
         const fetchInventario = async () => {
             try {
-                // Llama a tu endpoint de backend /inventario (Requisito 2.1)
-                const response = await apiClient.get('/inventario'); 
-                setInventario(response.data);
+                const response = await apiClient.get('/inventario');
+                setInventario(response.data || []);
             } catch (err) {
-                console.error("Error al cargar el inventario global:", err);
-                // 🚨 ACCESIBILIDAD: Mejora de contraste y estilo para mensaje de error
-                setError('Error al cargar el inventario. Asegúrate que la API está corriendo y hay datos.');
+                console.error(err);
+                setError('❌ Error al cargar el inventario. Verifica el servidor.');
             } finally {
                 setLoading(false);
             }
@@ -28,99 +33,94 @@ const InventarioGlobal = () => {
         fetchInventario();
     }, []);
 
-    // 🎯 LÓGICA DE FILTRADO: Usa useMemo para optimizar el rendimiento
     const filteredInventario = useMemo(() => {
-        // Si no hay término de búsqueda, retorna el inventario completo
-        if (!searchTerm) {
-            return inventario;
-        }
-
-        const lowerCaseSearchTerm = searchTerm.toLowerCase();
-
+        if (!searchTerm) return inventario;
+        const lowerSearch = searchTerm.toLowerCase();
         return inventario.filter(item => {
-            // Filtra si la Clave CB o la Descripción incluye el término de búsqueda
-            const claveMatch = item.claveCB.toLowerCase().includes(lowerCaseSearchTerm);
-            const descMatch = item.descripcion.toLowerCase().includes(lowerCaseSearchTerm);
-            
-            return claveMatch || descMatch;
+            const claveCB = item.claveCB?.toLowerCase() || '';
+            const descripcion = item.descripcion?.toLowerCase() || '';
+            return claveCB.includes(lowerSearch) || descripcion.includes(lowerSearch);
         });
-    }, [inventario, searchTerm]); // Se recalcula cuando cambian el inventario o el término de búsqueda
+    }, [inventario, searchTerm]);
 
-
-    if (loading) return <h1 style={{ padding: '20px' }}>Cargando Inventario Global...</h1>;
-    // 🚨 ACCESIBILIDAD: Estilos de alto contraste para el mensaje de error.
-    if (error) return <h1 style={{ color: '#8B0000', backgroundColor: '#FFCCCC', padding: '15px', borderRadius: '5px' }}>{error}</h1>;
+    if (loading) return <h2>Cargando Inventario Global...</h2>;
+    if (error) return <p className="alerta-error">{error}</p>;
 
     return (
         <div style={{ padding: '20px' }}>
-            <h1>Inventario Global de Enzimas</h1>
-            
-            {/* --- CAJA DE BÚSQUEDA --- */}
-            {/* 🎯 SEO/ACCESIBILIDAD: Se añade role="search" para definir esta sección como un mecanismo de búsqueda. */}
-            <div role="search" style={{ marginBottom: '20px' }}>
-                <label htmlFor="search" style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
-                    Buscar medicamento por Clave o Descripción:
-                </label>
+            {/* Título separado */}
+            <h1>Inventario Global Hospitalario</h1>
+
+            {/* Buscador */}
+            <div style={{ marginBottom: '20px' }}>
+                <label htmlFor="search">Buscar por Clave o Descripción:</label>
                 <input
                     type="text"
                     id="search"
-                    placeholder="Escribe aquí para filtrar..."
+                    placeholder="Escribe aquí..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    style={{ 
-                        width: '300px', 
-                        padding: '10px 15px', 
-                        fontSize: '16px', 
-                        border: '1px solid #007bff', 
-                        borderRadius: '6px'
+                    style={{
+                        display: 'block',
+                        marginTop: '5px',
+                        padding: '8px',
+                        width: '100%',
+                        borderRadius: '6px',
+                        border: '1px solid #ccc'
                     }}
                 />
             </div>
-            {/* ------------------------- */}
 
-
-            <p>
-                Total de productos únicos: <strong style={{color: '#007bff'}}>{inventario.length}</strong> (Mostrando: <strong style={{color: '#007bff'}}>{filteredInventario.length}</strong> coincidencias)
+            <p aria-live="polite">
+                Total de productos: <strong>{inventario.length}</strong> (Mostrando: <strong>{filteredInventario.length}</strong>)
             </p>
 
-            {filteredInventario.length === 0 && searchTerm ? (
-                // 🚨 ACCESIBILIDAD: Se añade role="alert" para notificar a lectores de pantalla.
-                <p role="alert" style={{ color: '#dc3545', fontWeight: 'bold', borderLeft: '4px solid #dc3545', padding: '10px', backgroundColor: '#fef3f4' }}>
-                    No se encontraron resultados para la búsqueda "{searchTerm}".
+            {filteredInventario.length === 0 && searchTerm && (
+                <p className="alerta-error">
+                    No se encontraron resultados para "<strong>{searchTerm}</strong>".
                 </p>
-            ) : (
-                // 🚨 ACCESIBILIDAD: Wrapper con overflow-x-auto para responsividad en móvil.
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ minWidth: '700px', width: '100%', borderCollapse: 'collapse', marginTop: '20px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-                        {/* 🎯 SEO/ACCESIBILIDAD: Se añade caption para proporcionar un título descriptivo a la tabla. */}
-                        <caption style={{ textAlign: 'left', margin: '10px 0', fontSize: '1.2em', fontWeight: '600' }}>
-                            Listado Detallado del Inventario Global de Enzimas
-                        </caption>
+            )}
+
+            {/* Tabla con scroll */}
+            {filteredInventario.length > 0 && (
+                <div style={{ overflowX: 'auto', marginTop: '20px' }}>
+                    <h2 style={{ color: '#38bdf8', marginBottom: '10px' }}>Listado Detallado del Inventario</h2>
+                    <table className="tabla-hospitalaria" id={INVENTORY_TABLE_ID}>
                         <thead>
-                            <tr style={{ backgroundColor: '#007bff', color: 'white' }}>
-                                {/* 🚨 ACCESIBILIDAD: Se añade scope="col" a todos los encabezados de columna. */}
-                                <th scope="col" style={{ padding: '12px', border: '1px solid #0056b3' }}>Clave CB</th>
-                                <th scope="col" style={{ padding: '12px', border: '1px solid #0056b3' }}>Descripción</th>
-                                <th scope="col" style={{ padding: '12px', border: '1px solid #0056b3' }}>Presentación</th>
-                                <th scope="col" style={{ padding: '12px', border: '1px solid #0056b3' }}>Total Enzimas</th>
+                            <tr>
+                                <th>Clave CB</th>
+                                <th>Descripción</th>
+                                <th>Presentación</th>
+                                <th>Total Disponible</th>
+                                <th>Días para Caducar</th>
+                                <th>Semáforo</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {filteredInventario.map((item, index) => (
-                                // Usamos el índice de la lista filtrada para el color de las filas
-                                <tr 
-                                    key={item.claveCB} 
-                                    style={{ 
-                                        backgroundColor: index % 2 === 0 ? '#f8f9fa' : 'white', 
-                                        transition: 'background-color 0.15s' 
-                                    }}
-                                >
-                                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{item.claveCB}</td>
-                                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{item.descripcion}</td>
-                                    <td style={{ padding: '10px', border: '1px solid #ddd' }}>{item.presentacion}</td>
-                                    <td style={{ padding: '10px', border: '1px solid #ddd', textAlign: 'center', fontWeight: 'bold' }}>{item.totalEnzimas}</td>
-                                </tr>
-                            ))}
+                            {filteredInventario.map(item => {
+                                const color = getExpirationStatus(item.diasParaVencer);
+                                return (
+                                    <tr key={item.claveCB}>
+                                        <td>{item.claveCB}</td>
+                                        <td>{item.descripcion}</td>
+                                        <td>{item.presentacion}</td>
+                                        <td style={{ textAlign: 'center' }}>{Number(item.totalEnzimas) || 0}</td>
+                                        <td style={{ textAlign: 'center' }}>{item.diasParaVencer ?? 'N/A'}</td>
+                                        <td style={{ textAlign: 'center' }}>
+                                            <span
+                                                style={{
+                                                    display: 'inline-block',
+                                                    width: '16px',
+                                                    height: '16px',
+                                                    borderRadius: '50%',
+                                                    backgroundColor: color,
+                                                    border: '1px solid #ccc'
+                                                }}
+                                            ></span>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
                         </tbody>
                     </table>
                 </div>

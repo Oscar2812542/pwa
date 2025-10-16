@@ -197,7 +197,7 @@ const FormularioSalida = () => {
                     <h3 style={{marginTop: '20px'}}>Sugerencia FEFO (Para cumplimiento)</h3>
                     {lotesSugeridos.length > 0 ? (
                         <p>El lote más próximo a caducar es: 
-                            {/* 🎯 CORRECCIÓN DE CAMPO: Usamos el campo correcto que viene del backend (ej. 'lote' o 'loteId') */}
+                            {/* CORRECCIÓN DE CAMPO: Usamos el campo correcto que viene del backend (ej. 'lote' o 'loteId') */}
                             <strong>{lotesSugeridos[0].lote || lotesSugeridos[0].loteId}</strong>, 
                             Caduca: {new Date(lotesSugeridos[0].caducidad).toLocaleDateString('es-MX')}. 
                             Existencia: {lotesSugeridos[0].existenciaActual}

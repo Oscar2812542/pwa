@@ -16,46 +16,34 @@ const initialFormData = {
 
 const FormularioEntrada = () => {
     const [formData, setFormData] = useState(initialFormData);
-    const [medicamentos, setMedicamentos] = useState([]); // Catálogo de Medicamentos
-    const [personal, setPersonal] = useState([]);      // Catálogo de Personal
+    const [medicamentos, setMedicamentos] = useState([]);
+    const [personal, setPersonal] = useState([]);
     const [mensaje, setMensaje] = useState('');
     const [loading, setLoading] = useState(true);
 
-    // useEffect para cargar los catálogos
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // 🎯 CORRECCIÓN CLAVE: Agregamos el prefijo '/inventario'
-                // Ya que tu server.js usa: app.use('/api/inventario', inventarioRoutes);
-
-                // 1. Cargar Catálogo de Medicamentos
-                const medsResponse = await apiClient.get('/inventario/medicamentos'); // <--- RUTA CORREGIDA
+                const medsResponse = await apiClient.get('/inventario/medicamentos');
                 setMedicamentos(medsResponse.data);
-
-                // 2. Cargar Lista de Personal
-                const personalResponse = await apiClient.get('/inventario/personal');   // <--- RUTA CORREGIDA
+                const personalResponse = await apiClient.get('/inventario/personal');
                 setPersonal(personalResponse.data);
-
                 setLoading(false);
             } catch (error) {
-                // Es muy importante mostrar este error si falla el catálogo
                 console.error("Error al cargar catálogos:", error);
-                setMensaje('❌ Error al conectar con el servidor para cargar catálogos. Revisa la consola (F12) y el backend.');
+                setMensaje('❌ Error al conectar con el servidor. Revisa la consola y el backend.');
                 setLoading(false);
             }
         };
-
         fetchData();
     }, []); 
 
     const handleChange = (e) => {
         const { name, value } = e.target;
-        // Convertir a número si es el caso. Asegura que no se intente parsear una cadena vacía
         let parsedValue = value;
         if (name === 'costoUnitario' || name === 'totalEnzimas') {
             parsedValue = value === '' ? 0 : parseFloat(value);
         }
-        
         setFormData({ ...formData, [name]: parsedValue });
     };
 
@@ -63,19 +51,15 @@ const FormularioEntrada = () => {
         e.preventDefault();
         setMensaje('');
 
-        // Asegurarse de que el costoUnitario y totalEnzimas no sean NaN o 0 (si son obligatorios)
         if (isNaN(formData.costoUnitario) || isNaN(formData.totalEnzimas) || formData.totalEnzimas <= 0) {
-            setMensaje('❌ Error: El costo y la cantidad deben ser números válidos y mayores a cero.');
+            setMensaje('❌ Error: El costo y la cantidad deben ser válidos y mayores a cero.');
             return;
         }
 
         try {
-            // Envío de datos al backend de Node.js
-            // 🎯 VERIFICACIÓN: Esta ruta ya es correcta si la tienes definida como: 
-            // router.post('/movimientos/entrada', createEntrada) en inventario.js
-            const response = await apiClient.post('/inventario/movimientos/entrada', formData); // <-- Agregar prefijo
-            setMensaje(`✅ Éxito: ${response.data.message} Lote: ${formData.lote}`);
-            setFormData(initialFormData); // Limpiar formulario
+            const response = await apiClient.post('/inventario/movimientos/entrada', formData);
+            setMensaje(`✅ ${response.data.message} (Lote: ${formData.lote})`);
+            setFormData(initialFormData);
         } catch (error) {
             const msg = error.response?.data?.message || 'Error desconocido al registrar la entrada.';
             setMensaje(`❌ Error: ${msg}`);
@@ -84,97 +68,91 @@ const FormularioEntrada = () => {
     };
 
     const medicamentoSeleccionado = medicamentos.find(m => m.claveCB === formData.claveCB);
-        
-    // Cálculo en tiempo real del Costo Total
-    const costoUnitarioNum = parseFloat(formData.costoUnitario) || 0;
-    const totalEnzimasNum = parseFloat(formData.totalEnzimas) || 0;
-    const costoTotalCalculado = costoUnitarioNum * totalEnzimasNum;
-        
-    if (loading) return <h1>Cargando catálogos...</h1>;
-    if (medicamentos.length === 0 && !mensaje.startsWith('❌')) {
-        return <h1 style={{color: 'orange'}}>⚠️ Advertencia: No hay medicamentos en el catálogo. Por favor, añada uno.</h1>
-    }
-    
+    const costoTotal = (parseFloat(formData.costoUnitario) || 0) * (parseFloat(formData.totalEnzimas) || 0);
+
+    if (loading) return <h2 className="texto-cargando">Cargando catálogos...</h2>;
+
     return (
-        <div style={{ padding: '20px' }}>
-            <h1>Generar Entrada de Medicamentos</h1>
-            {mensaje && <p style={{ padding: '10px', backgroundColor: mensaje.startsWith('✅') ? '#d4edda' : '#f8d7da', border: '1px solid', marginBottom: '20px' }}>{mensaje}</p>}
-            <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-        
-        {/* COLUMNA 1 */}
-        <div>
-            <h2>Datos de Identificación</h2>
-            <label>Clave de CB:</label>
-            <select name="claveCB" value={formData.claveCB} onChange={handleChange} required>
-                <option value="">Seleccione el medicamento</option>
-                {medicamentos.map(med => (
-                    <option key={med.claveCB} value={med.claveCB}>{med.claveCB} - {med.descripcion}</option>
-                ))}
-            </select>
+        <div className="container formulario-container">
+            <h1>Registro de Entrada Hospitalaria</h1>
 
-            {/* Muestra datos del catálogo al seleccionar */}
-            {medicamentoSeleccionado && (
-                <>
-                    <p>Descripción: <strong>{medicamentoSeleccionado.descripcion}</strong></p>
-                    <p>Presentación: <strong>{medicamentoSeleccionado.presentacion}</strong></p>
-                </>
+            {mensaje && (
+                <div className={`alerta ${mensaje.startsWith('✅') ? 'alerta-exito' : 'alerta-error'}`}>
+                    {mensaje}
+                </div>
             )}
 
-            <label>Proveedor:</label>
-            <input type="text" name="proveedor" value={formData.proveedor} onChange={handleChange} required />
-            
-            <label>Factura:</label>
-            <input type="text" name="factura" value={formData.factura} onChange={handleChange} required />
-            
-            <label>Pedido:</label>
-            <input type="text" name="pedido" value={formData.pedido} onChange={handleChange} required />
-            
-            <label>Laboratorio:</label>
-            <input type="text" name="laboratorio" value={formData.laboratorio} onChange={handleChange} required />
+            <form onSubmit={handleSubmit} className="formulario-grid">
+                {/* --- COLUMNA 1 --- */}
+                <div className="columna">
+                    <h2>Datos del Medicamento</h2>
+
+                    <label>Clave CB:</label>
+                    <select name="claveCB" value={formData.claveCB} onChange={handleChange} required>
+                        <option value="">Seleccione el medicamento</option>
+                        {medicamentos.map(med => (
+                            <option key={med.claveCB} value={med.claveCB}>
+                                {med.claveCB} - {med.descripcion}
+                            </option>
+                        ))}
+                    </select>
+
+                    {medicamentoSeleccionado && (
+                        <div className="detalle-medicamento">
+                            <p><strong>Descripción:</strong> {medicamentoSeleccionado.descripcion}</p>
+                            <p><strong>Presentación:</strong> {medicamentoSeleccionado.presentacion}</p>
+                        </div>
+                    )}
+
+                    <label>Proveedor:</label>
+                    <input type="text" name="proveedor" value={formData.proveedor} onChange={handleChange} required />
+
+                    <label>Factura:</label>
+                    <input type="text" name="factura" value={formData.factura} onChange={handleChange} required />
+
+                    <label>Pedido:</label>
+                    <input type="text" name="pedido" value={formData.pedido} onChange={handleChange} required />
+
+                    <label>Laboratorio:</label>
+                    <input type="text" name="laboratorio" value={formData.laboratorio} onChange={handleChange} required />
+                </div>
+
+                {/* --- COLUMNA 2 --- */}
+                <div className="columna">
+                    <h2>Datos del Lote</h2>
+
+                    <label>Lote:</label>
+                    <input type="text" name="lote" value={formData.lote} onChange={handleChange} required />
+
+                    <label>Caducidad:</label>
+                    <input type="date" name="caducidad" value={formData.caducidad} onChange={handleChange} required />
+
+                    <label>Costo Unitario ($):</label>
+                    <input type="number" name="costoUnitario" min="0" step="0.01" value={formData.costoUnitario} onChange={handleChange} required />
+
+                    <label>Total de Enzimas:</label>
+                    <input type="number" name="totalEnzimas" min="1" value={formData.totalEnzimas} onChange={handleChange} required />
+
+                    <p className="costo-total">
+                        Costo Total del Lote: <strong>${costoTotal.toFixed(2)}</strong>
+                    </p>
+
+                    <label>Responsable:</label>
+                    <select name="responsable" value={formData.responsable} onChange={handleChange} required>
+                        <option value="">Seleccione el responsable</option>
+                        {personal.map((p, i) => (
+                            <option key={p._id || i} value={p.nombre}>
+                                {p.nombre} ({p.cargo})
+                            </option>
+                        ))}
+                    </select>
+
+                    <button type="submit" className="btn-hospital">
+                        Registrar Entrada
+                    </button>
+                </div>
+            </form>
         </div>
-
-        {/* COLUMNA 2 */}
-        <div>
-            <h2>Datos del Lote y Cantidad</h2>
-            <label>LOTE:</label>
-            <input type="text" name="lote" value={formData.lote} onChange={handleChange} required />
-
-            <label>CADUCIDAD:</label>
-            <input type="date" name="caducidad" value={formData.caducidad} onChange={handleChange} required />
-
-            <label>Costo Unitario:</label>
-            <input type="number" name="costoUnitario" value={formData.costoUnitario} onChange={handleChange} min="0" step="0.01" required />
-
-            <label>TOTAL DE ENZIMAS (Cantidad que Entra):</label>
-            <input type="number" name="totalEnzimas" value={formData.totalEnzimas} onChange={handleChange} min="1" required />
-                            
-            <p style={{ 
-                marginTop: '10px', padding: '10px', backgroundColor: '#e9ecef', 
-                fontWeight: 'bold', borderLeft: '4px solid #007bff' 
-            }}>
-                Costo Total del Lote: ${costoTotalCalculado.toFixed(2)}
-            </p>
-                            
-            <label>Responsable del Movimiento:</label>
-            <select name="responsable" value={formData.responsable} onChange={handleChange} required>
-            <option value="">Seleccione el responsable</option>
-            {personal.length > 0 ? (
-                personal.map((p, index) => (
-                    <option key={p._id || index} value={p.nombre}>
-                        {p.nombre} ({p.cargo})
-                    </option>
-                ))
-            ) : (
-                <option value="" disabled>⚠️ No se pudo cargar el personal (Revisar Backend)</option>
-            )}
-            </select>
-
-            <button type="submit" style={{ marginTop: '30px', padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', cursor: 'pointer' }}>
-                Registrar Entrada
-            </button>
-        </div>
-        </form>
-    </div>
     );
 };
 
