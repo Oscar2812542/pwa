@@ -43,7 +43,7 @@ function App() {
   return (
     <BrowserRouter>
       <header>
-        <h2 style={{ padding: '10px 20px', margin: 0, textAlign: 'center' }}>Pwa </h2>
+        <h2 style={{ padding: '10px 20px', margin: 0, textAlign: 'center' }}>Dr. Juan Carlos Ojeda. </h2>
         <NavBar />
       </header>
 

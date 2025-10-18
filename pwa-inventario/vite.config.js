@@ -1,4 +1,3 @@
-// vite.config.js
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
@@ -11,10 +10,10 @@ export default defineConfig({
   plugins: [
     react(),
 
-    // 🧩 VISUALIZADOR OPCIONAL (para ver el peso del JS)
+    // 🧩 VISUALIZADOR OPCIONAL
     visualizer({
       filename: 'bundle-stats.html',
-      open: false, // pon en true si quieres verlo automáticamente tras build
+      open: false,
     }),
 
     // ⚡ PLUGIN PWA CONFIGURADO PARA MÓVIL
@@ -29,10 +28,7 @@ export default defineConfig({
 
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,json,webp}'],
-
-        // ✅ CACHÉ EFICIENTE: Archivos estáticos + API
         runtimeCaching: [
-          // 📦 Archivos estáticos (JS/CSS) → cache-first
           {
             urlPattern: ({ request }) =>
               request.destination === 'script' ||
@@ -41,22 +37,15 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'static-cache',
-              expiration: {
-                maxEntries: 60,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 días
-              },
+              expiration: { maxEntries: 60, maxAgeSeconds: 60 * 60 * 24 * 30 },
             },
           },
-          // 🌐 API (actualiza en segundo plano)
           {
             urlPattern: ({ url }) => url.pathname.startsWith('/api/inventario/'),
             handler: 'StaleWhileRevalidate',
             options: {
               cacheName: 'api-cache',
-              expiration: {
-                maxEntries: 50,
-                maxAgeSeconds: 60 * 60 * 24 * 7, // 7 días
-              },
+              expiration: { maxEntries: 50, maxAgeSeconds: 60 * 60 * 24 * 7 },
             },
           },
         ],
@@ -72,38 +61,26 @@ export default defineConfig({
         start_url: '/',
         orientation: 'portrait',
         icons: [
-          {
-            src: 'pwa-192x192.png',
-            sizes: '192x192',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-          },
-          {
-            src: 'pwa-maskable-512x512.png',
-            sizes: '512x512',
-            type: 'image/png',
-            purpose: 'maskable',
-          },
+          { src: 'pwa-192x192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'pwa-512x512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'pwa-maskable-512x512.png', sizes: '512x512', type: 'image/png', purpose: 'maskable' },
         ],
       },
     }),
   ],
 
-  // 🧠 OPTIMIZACIÓN DE BUILD PARA MÓVIL
   build: {
-    minify: 'esbuild',       // ✅ Compila y minifica rápido
-    target: 'es2017',        // ✅ Compatible con navegadores móviles modernos
+    minify: 'esbuild',
+    target: 'es2017',
     sourcemap: false,
     cssMinify: true,
     chunkSizeWarningLimit: 600,
   },
 
-  // 💨 COMPRESIÓN EN DESARROLLO (para probar rendimiento real)
+  // 💨 CONFIGURACIÓN DEL SERVIDOR PARA DESARROLLO LOCAL Y CELULAR
   server: {
+    host: true,   // 🔑 Permite conexiones desde tu celular en la misma red
+    port: 5173,   // 🔑 Puerto de tu dev server
     compress: true,
   },
 })
